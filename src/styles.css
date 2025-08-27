@@ -9,8 +9,16 @@ body, html {
   background-color: #ffffff;
 
 }
+
+/* Default starting canvas */
 canvas {
-  width: 500px;
-  height: 500px;
+  width: 5000px;
+  height: 5000px;
   background-color: #ffffff;
+}
+
+/* Get values from main.js */
+.canvas-modified {
+  width: 600px;
+  height: 500px;
 }
