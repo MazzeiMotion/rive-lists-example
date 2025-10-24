@@ -1,49 +1,85 @@
-// This is the High level JS runtime for Rive
-// https://rive.app/community/doc/web-js/docvlgbnS1mp
-// Thx, Pedro!
+// helper.js might contain this
+function computeSize(riveInstance) {
+  if (riveInstance) {
+    riveInstance.resizeDrawingSurfaceToCanvas();
+  }
+}
 
-import { getBindedViewModel, computeSize } from './helpers.js';
+// Debounce helper function
+function debounce(func, delay = 150) {
+  let timeout;
+  return (...args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      func.apply(this, args);
+    }, delay);
+  };
+}
 
-const RIVE_FILE = "button.riv";
-const DEFAULT_ARTBOARD = "default";
-const DEFAULT_STATEMACHINES = "default";
-const DEFAULT_CONTAINER = document.getElementById("canvas");
-const CONTAINER_WIDTH = '200px';
-const CONTAINER_HEIGHT = '200px';
-const DEFAULT_LAYOUT = new rive.Layout({
-    fit: rive.Fit.Contain,
-    //fit: rive.Fit.Layout, // use this for responsive layouts
-    // layoutScaleFactor: .5, // if needed
-  });
-
-const riveInstance = new rive.Rive({
-  src: RIVE_FILE,
-  canvas: DEFAULT_CONTAINER,
+// 1. Centralized Configuration
+const RIVE_CONFIG = {
+  src: "badge-list.riv",
+  canvas: document.getElementById("canvas"),
+  artboard: "display",
+  stateMachines: "State Machine 1",
+  layout: new rive.Layout({
+    fit: rive.Fit.Contain, // Use Contain or Cover for responsiveness
+  }),
   autoplay: true,
   autoBind: true,
-  layout: DEFAULT_LAYOUT,
-  artboard: DEFAULT_ARTBOARD,
-  stateMachines: DEFAULT_STATEMACHINES,
+};
 
+const badgesData = [
+  { icon: "basketball", quality: "bronze" },
+  { icon: "football", quality: "silver" },
+  { icon: "baseball", quality: "gold" },
+];
+
+function createBadge(icon, quality, riveInstance, list) {
+  if (!riveInstance || !list) return;
+
+  const badgeVM = riveInstance.viewModelByName("badgeVM");
+  if (!badgeVM) {
+    console.error("ViewModel 'badgeVM' not found.");
+    return;
+  }
+  const newBadge = badgeVM.instance();
+  newBadge.enum("icon").value = icon;
+  newBadge.enum("quality").value = quality;
+  list.addInstance(newBadge);
+}
+
+// Initialize the Rive app
+const riveInstance = new rive.Rive({
+  ...RIVE_CONFIG, // Spread the config object
   onLoad: () => {
-    requestAnimationFrame(() => {
-      computeSize(riveInstance);
+    // Ensure the canvas is sized correctly on load
+    computeSize(riveInstance);
+
+    const vmi = riveInstance.viewModelInstance;
+    if (!vmi) {
+      console.error("ViewModelInstance not available.");
+      return;
+    }
+    
+    const list = vmi.list("list");
+    if (!list) {
+      console.error("List named 'list' not found in the ViewModel.");
+      return;
+    }
+
+    // 5. Loop through data to create badges
+    badgesData.forEach(badge => {
+      createBadge(badge.icon, badge.quality, riveInstance, list);
     });
-    applyStyles(DEFAULT_CONTAINER,CONTAINER_WIDTH,CONTAINER_HEIGHT);
-    const vmi = getBindedViewModel(riveInstance); // For Data-Binds!
+  },
+  onLoadError: (error) => {
+    console.error("Failed to load Rive file:", error);
   },
 });
 
-function applyStyles(element, width, height) {
-  element.classList.add('canvas-modified');
-  element.style.width = width;
-  element.style.height = height;
-}
-
-// Subscribe to window size changes and update call `resizeDrawingSurfaceToCanvas`
-window.onresize = computeSize(riveInstance);
-
-// Subscribe to devicePixelRatio changes and call `resizeDrawingSurfaceToCanvas`
-window
-.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`)
-.addEventListener("change", computeSize(riveInstance));
+// Layout evaluations
+const debouncedResize = debounce(() => computeSize(riveInstance), 150);
+window.addEventListener('resize', debouncedResize);
+const mediaQuery = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);
+mediaQuery.addEventListener('change', debouncedResize);
