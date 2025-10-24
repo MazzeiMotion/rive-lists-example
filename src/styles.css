@@ -1,24 +1,24 @@
-#app {
-  /* Make the container fill the full screen */
-  width: 100vw; /* 100% of viewport width */
-  height: 100vh; /* 100% of viewport height */
-  /* Flexbox properties for centering */
+body, html {
+  margin: 0;
+  padding: 0;
   display: flex;
   justify-content: center;
   align-items: center;
-  /* Optional: a background to see the container */
-  background-color: #f0f0f0;
-}
-
-canvas {
-  width: 90%;
-  height: 90%;
+  height: 100vh;
+  font-family: Arial, sans-serif;
   background-color: #ffffff;
-  /* Optional: a border to see the canvas edges */
-  border: 1px solid #cccccc;
+
 }
 
-/* It's good practice to remove default margin/padding */
-body {
-  margin: 0;
+/* Default starting canvas */
+canvas {
+  width: 5000px;
+  height: 5000px;
+  background-color: #ffffff;
+}
+
+/* Get values from main.js */
+.canvas-modified {
+  width: 600px;
+  height: 500px;
 }
